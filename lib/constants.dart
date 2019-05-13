@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-final Color primaryColor = Color(0x108b36);
-final Color primaryDark = Color(0x006a26);
+final Color primaryColor = Color.fromRGBO(16, 139, 54, 1);
+final Color primaryDark = Color.fromRGBO(0, 106, 38, 1);
 
-final Color secondaryColor = Color(0xe89600);
+final Color secondaryColor = Color.fromRGBO(232, 150, 0, 1);
