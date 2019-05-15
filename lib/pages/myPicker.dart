@@ -18,7 +18,8 @@ class _MyPickerState extends State<MyPicker> {
   List<String> albums;
   List<Song> selectedSongs = List<Song>();
   List<Song> allSongs = List<Song>();
-
+  // bool isExpanded = true;
+  // bool isSelectedAll = false;
   @override
   void initState() {
     albums = widget.list.keys.toList();
@@ -38,6 +39,37 @@ class _MyPickerState extends State<MyPicker> {
         automaticallyImplyLeading: false,
         title: Text("Add ringtones"),
         actions: <Widget>[
+          // isAlbumMode
+          //     ? isExpanded
+          //         ? IconButton(
+          //             icon: Icon(Icons.list),
+          //             onPressed: () {
+          //               setState(() {
+          //                 isExpanded = false;
+          //               });
+          //             },
+          //           )
+          //         : IconButton(
+          //             icon: Icon(Icons.line_style),
+          //             onPressed: () {
+          //               isExpanded = true;
+          //             },
+          //           )
+          //     : isSelectedAll
+          //         ? IconButton(
+          //             icon: Icon(Icons.playlist_add_check),
+          //             onPressed: () {
+          //               setState(() {
+          //                 selectedSongs.clear();
+          //               });
+          //             },
+          //           )
+          //         : IconButton(
+          //             icon: Icon(Icons.pool),
+          //             onPressed: () {
+          //               selectedSongs = allSongs;
+          //             },
+          //           ),
           IconButton(
             onPressed: () {
               setState(() {
@@ -56,46 +88,48 @@ class _MyPickerState extends State<MyPicker> {
       ),
       body: Padding(
         padding: EdgeInsets.fromLTRB(s, s, s, 0),
-        child: isAlbumMode
-            ? buildAlbumView(context, s)
-            : ListView.builder(
-                itemCount: allSongs.length,
-                itemBuilder: (bc, i) {
-                  return GestureDetector(
-                    onTap: () {
-                      if (selectedSongs.contains(allSongs[i])) {
-                        setState(() {
-                          selectedSongs.remove(allSongs[i]);
-                        });
-                      } else {
-                        setState(() {
-                          selectedSongs.add(allSongs[i]);
-                        });
-                      }
-                    },
-                    child: Card(
-                      color: selectedSongs.contains(allSongs[i])
-                          ? secondaryColor
-                          : Colors.black,
-                      child: Container(
-                        alignment: Alignment.centerLeft,
-                        height: widget.itemHeight,
-                        child: Container(
-                          padding: EdgeInsets.only(left: widget.spacing),
-                          child: Text(
-                            allSongs[i].title,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: widget.spacing,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+        child: isAlbumMode ? buildAlbumView(context, s) : buildSongsView(),
       ),
+    );
+  }
+
+  ListView buildSongsView() {
+    return ListView.builder(
+      itemCount: allSongs.length,
+      itemBuilder: (bc, i) {
+        return GestureDetector(
+          onTap: () {
+            if (selectedSongs.contains(allSongs[i])) {
+              setState(() {
+                selectedSongs.remove(allSongs[i]);
+              });
+            } else {
+              setState(() {
+                selectedSongs.add(allSongs[i]);
+              });
+            }
+          },
+          child: Card(
+            color: selectedSongs.contains(allSongs[i])
+                ? secondaryColor
+                : Colors.black,
+            child: Container(
+              alignment: Alignment.centerLeft,
+              height: widget.itemHeight,
+              child: Container(
+                padding: EdgeInsets.only(left: widget.spacing),
+                child: Text(
+                  allSongs[i].title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: widget.spacing,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -117,17 +151,6 @@ class _MyPickerState extends State<MyPicker> {
                             splashColor: secondaryColor,
                             highlightColor: secondaryColor,
                             onTap: () {
-                              // if (selected
-                              //         .where((test) =>
-                              //             ((test.i == i) && (test.k == k)))
-                              //         .length !=
-                              //     0) {
-                              //   selectedSongs.removeWhere((test) =>
-                              //       test.uri == widget.list[albums[i]][k].uri);
-                              //   setState(() {
-                              //     selected.removeWhere((test) =>
-                              //         ((test.i == i) && (test.k == k)));
-                              //   });
                               if (selectedSongs
                                   .contains(widget.list[albums[i]][k])) {
                                 setState(() {

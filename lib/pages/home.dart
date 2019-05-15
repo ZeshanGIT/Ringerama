@@ -2,9 +2,9 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:demo/constants.dart';
+import 'package:demo/pages/myPicker2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-// import 'package:file_picker/file_picker.dart';
 import 'package:flute_music_player/flute_music_player.dart';
 import 'myPicker.dart';
 
@@ -27,6 +27,11 @@ class _HomeState extends State<Home> {
   bool addFlag2 = false;
 
   List<Song> ringtones = List<Song>();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +141,7 @@ class _HomeState extends State<Home> {
             duration: Duration(milliseconds: 150),
             opacity: addFlag ? 1.0 : 0.0,
             child: GestureDetector(
-              onTap: addFolder,
+              onTap: () => addFolder(spacing, itemHeight),
               child: addFlag2
                   ? Container(
                       decoration: BoxDecoration(
@@ -567,29 +572,58 @@ class _HomeState extends State<Home> {
     );
   }
 
-  addFolder() async {
+  addFolder(double spacing, double itemHeight) async {
     List<Song> list = await MusicFinder.allSongs();
-    List<String> albums = list.map((f) => f.album).toList();
-    Map<String, List<Song>> albumSong = new HashMap<String, List<Song>>();
-    for (String album in albums) {
-      albumSong.putIfAbsent(
-          album, () => list.where((song) => song.album == album).toList());
+    List<Directory> temp = list.map((f) => File(f.uri).parent).toList();
+    List<Directory> folders = List<Directory>();
+    for (Directory folder in temp) {
+      if (!folders.map((Directory f) => f.path).toList().contains(folder.path))
+        folders.add(folder);
     }
-
-    print(albumSong);
-
-    List<String> folders =
-        list.map((f) => File(f.uri).parent.toString()).toList();
-    Map<String, List<Song>> folderSong = new HashMap<String, List<Song>>();
-    for (String folder in folders) {
-      folderSong.putIfAbsent(
-          folder,
-          () => list
-              .where((song) => File(song.uri).parent.toString() == folder)
-              .toList());
-    }
-
-    print(folderSong);
+    print(folders);
+    showDialog(
+      context: context,
+      builder: (bc) => AlertDialog(
+            backgroundColor: Colors.black,
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (bc) => MyDirectoryPicker(
+                            spacing: spacing,
+                            itemHeight: itemHeight,
+                            list: folders,
+                            songs: list,
+                          ),
+                    ),
+                  );
+                },
+                child: Text(
+                  "No",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              RaisedButton(
+                color: secondaryColor,
+                onPressed: () {},
+                child: Text(
+                  "Yes",
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
+            title: Text(
+              "Automatic",
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              "Automatically import all the ringtones from this directory in the future?",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+    );
   }
 
   addMusic(double spacing, double itemHeight) async {
@@ -608,9 +642,10 @@ class _HomeState extends State<Home> {
                   list: albumSong,
                   itemHeight: itemHeight,
                 ))).then((val) {
-      setState(() {
-        ringtones = val;
-      });
+      if (val != null)
+        setState(() {
+          ringtones = val;
+        });
     });
   }
 }
