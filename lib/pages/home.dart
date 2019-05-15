@@ -1,6 +1,12 @@
+import 'dart:collection';
+import 'dart:io';
+
 import 'package:demo/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+// import 'package:file_picker/file_picker.dart';
+import 'package:flute_music_player/flute_music_player.dart';
+import 'myPicker.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -16,6 +22,11 @@ class _HomeState extends State<Home> {
   int interval = 10;
 
   double seekTime = 0;
+
+  bool addFlag = false;
+  bool addFlag2 = false;
+
+  List<Song> ringtones = List<Song>();
 
   @override
   Widget build(BuildContext context) {
@@ -44,75 +55,167 @@ class _HomeState extends State<Home> {
       ),
       backgroundColor: primaryDark,
       appBar: AppBar(
+        actions: currTab == 1
+            ? <Widget>[
+                IconButton(
+                  icon: Icon(Icons.sort),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: Icon(Icons.spa),
+                  onPressed: () {},
+                ),
+              ]
+            : null,
         backgroundColor: primaryColor,
         title: Text("Ringerama"),
       ),
       body: PageView(
         controller: pageController,
         physics: NeverScrollableScrollPhysics(),
-        children: <Widget>[
-          buildHome(),
-          LayoutBuilder(
-            builder: (build, bcon) {
-              double k = bcon.maxHeight * 0.02;
-              return Padding(
-                padding: EdgeInsets.fromLTRB(k, k, k, 0),
-                child: LayoutBuilder(
-                  builder: (bc, c) {
-                    double itemHeight = c.maxHeight / 8;
-                    if (itemHeight > 70) itemHeight = 70;
-                    double spacing = c.maxHeight / 24;
-                    double w = c.maxWidth;
-                    return Stack(
-                      children: <Widget>[
-                        ListView.builder(
-                          itemCount: 10,
-                          itemBuilder: (bc, i) => Card(
-                                color: Colors.black,
-                                child: Container(
-                                  height: itemHeight,
-                                ),
-                              ),
-                        ),
-                        buildAddButton(spacing),
-                      ],
-                    );
-                  },
-                ),
-              );
-            },
-          )
-        ],
+        children: <Widget>[buildHome(), buildPlaylist()],
       ),
     );
   }
 
-  Align buildAddButton(double spacing) {
+  LayoutBuilder buildPlaylist() {
+    return LayoutBuilder(
+      builder: (build, bcon) {
+        double k = bcon.maxHeight * 0.02;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(k, k, k, 0),
+          child: LayoutBuilder(
+            builder: (bc, c) {
+              double itemHeight = c.maxHeight / 8;
+              if (itemHeight > 70) itemHeight = 70;
+              double spacing = c.maxHeight / 24;
+              // double w = c.maxWidth;
+              return Stack(
+                children: <Widget>[
+                  Positioned(
+                    child: ListView.builder(
+                      itemCount: ringtones.length,
+                      itemBuilder: (bc, i) => Card(
+                            color: Colors.black,
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              height: itemHeight,
+                              child: Container(
+                                padding: EdgeInsets.only(left: spacing),
+                                child: Text(
+                                  ringtones.map((f) => f.title).toList()[i],
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: spacing,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                    ),
+                  ),
+                  buildAddButton(spacing, itemHeight),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildAddButton(double spacing, double itemHeight) {
     double s = spacing / 2;
     return Align(
       alignment: Alignment.bottomRight,
-      child: Container(
-        decoration: BoxDecoration(
-          color: secondaryColor,
-          borderRadius: BorderRadius.circular(100),
-        ),
-        padding: EdgeInsets.all(s),
-        margin: EdgeInsets.only(bottom: s),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.add,
-              color: Colors.white,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          AnimatedOpacity(
+            duration: Duration(milliseconds: 150),
+            opacity: addFlag ? 1.0 : 0.0,
+            child: GestureDetector(
+              onTap: addFolder,
+              child: addFlag2
+                  ? Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: secondaryColor,
+                      ),
+                      padding: EdgeInsets.all(s),
+                      margin: EdgeInsets.only(bottom: spacing / 2),
+                      child: Icon(
+                        Icons.folder,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Container(),
             ),
-            SizedBox(width: spacing / 4),
-            Text(
-              "Add",
-              style: TextStyle(color: Colors.white),
+          ),
+          SizedBox(width: s),
+          AnimatedOpacity(
+            duration: Duration(milliseconds: 100),
+            opacity: addFlag ? 1.0 : 0.0,
+            child: GestureDetector(
+              onTap: () => addMusic(spacing, itemHeight),
+              child: addFlag2
+                  ? Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: secondaryColor,
+                      ),
+                      padding: EdgeInsets.all(s),
+                      margin: EdgeInsets.only(bottom: spacing / 2),
+                      child: Icon(
+                        Icons.music_note,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Container(),
             ),
-            SizedBox(width: spacing / 4),
-          ],
-        ),
+          ),
+          SizedBox(width: s),
+          Container(
+            decoration: BoxDecoration(
+              color: secondaryColor,
+              borderRadius: BorderRadius.circular(100),
+            ),
+            padding: EdgeInsets.all(s),
+            margin: EdgeInsets.only(bottom: s),
+            child: GestureDetector(
+              onTap: () async {
+                if (!addFlag) {
+                  setState(() {
+                    addFlag2 = true;
+                    addFlag = true;
+                  });
+                } else {
+                  setState(() {
+                    addFlag = false;
+                  });
+                  Future.delayed(Duration(milliseconds: 150),
+                      () => setState(() => addFlag2 = false));
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    Icons.add,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: spacing / 4),
+                  Text(
+                    "Add",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  SizedBox(width: spacing / 4),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -462,5 +565,52 @@ class _HomeState extends State<Home> {
       color: color,
       borderRadius: BorderRadius.circular(12),
     );
+  }
+
+  addFolder() async {
+    List<Song> list = await MusicFinder.allSongs();
+    List<String> albums = list.map((f) => f.album).toList();
+    Map<String, List<Song>> albumSong = new HashMap<String, List<Song>>();
+    for (String album in albums) {
+      albumSong.putIfAbsent(
+          album, () => list.where((song) => song.album == album).toList());
+    }
+
+    print(albumSong);
+
+    List<String> folders =
+        list.map((f) => File(f.uri).parent.toString()).toList();
+    Map<String, List<Song>> folderSong = new HashMap<String, List<Song>>();
+    for (String folder in folders) {
+      folderSong.putIfAbsent(
+          folder,
+          () => list
+              .where((song) => File(song.uri).parent.toString() == folder)
+              .toList());
+    }
+
+    print(folderSong);
+  }
+
+  addMusic(double spacing, double itemHeight) async {
+    List<Song> list = await MusicFinder.allSongs();
+    List<String> albums = list.map((f) => f.album).toList();
+    Map<String, List<Song>> albumSong = new HashMap<String, List<Song>>();
+    for (String album in albums) {
+      albumSong.putIfAbsent(
+          album, () => list.where((song) => song.album == album).toList());
+    }
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (bc) => MyPicker(
+                  spacing: spacing,
+                  list: albumSong,
+                  itemHeight: itemHeight,
+                ))).then((val) {
+      setState(() {
+        ringtones = val;
+      });
+    });
   }
 }
